@@ -1,0 +1,2 @@
+[functions.mm-track]
+verify_jwt = false

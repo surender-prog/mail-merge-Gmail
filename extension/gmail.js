@@ -4,7 +4,8 @@ const SCOPES = [
   'email',
   'https://www.googleapis.com/auth/gmail.send',
   'https://www.googleapis.com/auth/gmail.readonly',
-  'https://www.googleapis.com/auth/spreadsheets.readonly',
+  'https://www.googleapis.com/auth/spreadsheets',
+  'https://www.googleapis.com/auth/drive.readonly',
 ];
 
 // Tokens are kept per Gmail account, so any number of accounts can be used.
@@ -117,14 +118,48 @@ export async function searchSenders(account, q) {
   return froms.filter(Boolean);
 }
 
+// Returns { id, title, values } for the tab in the URL (or the first tab).
 export async function readSheet(account, sheetUrl) {
   const id = sheetUrl.match(/\/d\/([\w-]+)/)?.[1] || sheetUrl;
   const gid = sheetUrl.match(/gid=(\d+)/)?.[1];
   const meta = await api(account, `https://sheets.googleapis.com/v4/spreadsheets/${id}?fields=sheets.properties`);
   const sheet = meta.sheets.find(s => gid && String(s.properties.sheetId) === gid) || meta.sheets[0];
-  const range = encodeURIComponent(`'${sheet.properties.title}'`);
+  const title = sheet.properties.title;
+  const range = encodeURIComponent(`'${title}'`);
   const { values = [] } = await api(account, `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${range}`);
-  return values;
+  return { id, title, values };
+}
+
+// Writes values (header first) into column colIndex (0-based) of the sheet.
+export async function writeColumn(account, { id, title }, colIndex, values) {
+  let col = '', n = colIndex + 1;
+  while (n > 0) { col = String.fromCharCode(65 + (n - 1) % 26) + col; n = Math.floor((n - 1) / 26); }
+  const range = encodeURIComponent(`'${title}'!${col}1:${col}${values.length}`);
+  await api(account, `https://sheets.googleapis.com/v4/spreadsheets/${id}/values/${range}?valueInputOption=RAW`, {
+    method: 'PUT',
+    body: JSON.stringify({ values: values.map(v => [v]) }),
+  });
+}
+
+// Downloads a Google Drive file by URL or ID. Google Docs/Sheets/Slides are exported as PDF.
+export async function getDriveFile(account, ref) {
+  const id = ref.match(/\/d\/([\w-]+)/)?.[1] || ref.match(/[?&]id=([\w-]+)/)?.[1] || ref.trim();
+  const meta = await api(account, `https://www.googleapis.com/drive/v3/files/${id}?fields=name,mimeType&supportsAllDrives=true`);
+  const native = meta.mimeType.startsWith('application/vnd.google-apps.');
+  const url = native
+    ? `https://www.googleapis.com/drive/v3/files/${id}/export?mimeType=application/pdf`
+    : `https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`;
+  const token = await getToken(account);
+  const res = await fetch(url, { headers: { Authorization: 'Bearer ' + token } });
+  if (!res.ok) throw new Error(`Could not download attachment ${meta.name}`);
+  const bytes = new Uint8Array(await res.arrayBuffer());
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+  return {
+    filename: native ? meta.name + '.pdf' : meta.name,
+    mimeType: native ? 'application/pdf' : meta.mimeType,
+    data: btoa(bin),
+  };
 }
 
 export function extractEmail(s) {

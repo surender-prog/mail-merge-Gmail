@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mail Merge for Gmail</title>
+<link rel="stylesheet" href="app.css">
+</head>
+<body>
+<header>
+  <h1>✉ Mail Merge for Gmail</h1>
+  <nav>
+    <button class="tab active" data-view="new">New campaign</button>
+    <button class="tab" data-view="dash">Campaigns &amp; analytics</button>
+  </nav>
+  <div class="account">
+    <input id="account" type="email" placeholder="you@gmail.com">
+    <button id="signin">Sign in</button>
+    <span id="auth-state"></span>
+  </div>
+</header>
+
+<main id="view-new">
+  <section>
+    <h2>1. Recipients</h2>
+    <div class="row">
+      <input id="sheet-url" placeholder="Google Sheet URL" class="grow">
+      <button id="load-sheet">Load sheet</button>
+      <span class="or">or</span>
+      <label class="btn">Upload CSV<input id="csv" type="file" accept=".csv,.tsv,text/csv" hidden></label>
+    </div>
+    <p id="recipients-info" class="muted">Row 1 must contain column names, e.g. <code>name</code>, <code>email</code>, <code>company</code>.</p>
+    <div id="columns" class="grid hidden">
+      <label>Email column <select id="col-email"></select></label>
+      <label>Cc column <select id="col-cc" class="optional"></select></label>
+      <label>Bcc column <select id="col-bcc" class="optional"></select></label>
+      <label>Attachments column <small>(Drive links)</small> <select id="col-attach" class="optional"></select></label>
+    </div>
+    <div id="table-wrap"></div>
+  </section>
+
+  <section>
+    <h2>2. Message</h2>
+    <div class="row">
+      <button id="from-draft">Use a Gmail draft</button>
+      <select id="drafts" class="hidden"></select>
+      <label class="btn">Import HTML template<input id="html-file" type="file" accept=".html,.htm" hidden></label>
+      <span id="draft-info" class="muted"></span>
+    </div>
+    <input id="subject" placeholder="Subject — e.g. Hello {{name}}, your results">
+    <div class="toolbar" data-for="body"></div>
+    <div id="body" class="editor" contenteditable="true"><p>Hello {{name}},</p><p><br></p><p>Best regards,</p></div>
+    <p class="muted">Insert fields with <code>{{column}}</code>, add a fallback with <code>{{column|there}}</code>, vary wording with <code>{Hi|Hello|Hey}</code>.</p>
+  </section>
+
+  <section>
+    <h2>3. Automated follow-ups</h2>
+    <div id="followups"></div>
+    <button id="add-followup">+ Add follow-up</button>
+    <p class="muted">Follow-ups are sent in the same thread and stop as soon as the recipient replies.</p>
+  </section>
+
+  <section>
+    <h2>4. Sending options</h2>
+    <div class="grid">
+      <label>Campaign name <input id="name"></label>
+      <label>Schedule <small>(empty = now)</small> <input id="schedule" type="datetime-local"></label>
+      <label>Delay between emails (s) <input id="delay" type="number" min="1" value="5"></label>
+      <label>Daily limit <small>(Gmail: ~500, Workspace: 1500)</small> <input id="daily" type="number" min="1" value="500"></label>
+      <label>Always Bcc <input id="bcc" type="email" placeholder="optional"></label>
+    </div>
+    <div class="checks">
+      <label><input id="track-opens" type="checkbox" checked> Track opens</label>
+      <label><input id="track-clicks" type="checkbox" checked> Track link clicks</label>
+      <label><input id="unsub" type="checkbox" checked> Add unsubscribe link</label>
+      <label><input id="write-status" type="checkbox" checked> Write status back to the Google Sheet</label>
+    </div>
+    <p id="tracking-note" class="muted hidden">Open/click tracking is off: set <code>TRACKING_URL</code> in <code>config.js</code>.</p>
+  </section>
+
+  <section>
+    <h2>5. Preview &amp; send</h2>
+    <div class="row">
+      <label>Preview row <select id="preview-row"></select></label>
+      <button id="test">Send test to me</button>
+      <button id="start" class="primary">Start campaign</button>
+      <span id="send-state"></span>
+    </div>
+    <div id="preview" class="preview"></div>
+  </section>
+</main>
+
+<main id="view-dash" class="hidden">
+  <div id="campaigns"></div>
+  <section id="detail" class="hidden"></section>
+</main>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
