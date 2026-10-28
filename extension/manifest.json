@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Mail Merge for Gmail",
+  "version": "1.0.0",
+  "description": "Send personalised mass emails from any Gmail account with Google Sheets data, tracking, scheduling and follow-ups.",
+  "icons": { "16": "icon16.png", "48": "icon48.png", "128": "icon128.png" },
+  "permissions": ["identity", "storage", "unlimitedStorage", "alarms", "notifications"],
+  "host_permissions": [
+    "https://gmail.googleapis.com/*",
+    "https://sheets.googleapis.com/*",
+    "https://www.googleapis.com/*",
+    "https://*.supabase.co/*"
+  ],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_title": "Mail Merge", "default_icon": { "16": "icon16.png", "48": "icon48.png" } },
+  "content_scripts": [{
+    "matches": ["https://mail.google.com/*"],
+    "js": ["content.js"],
+    "css": ["content.css"]
+  }]
+}
