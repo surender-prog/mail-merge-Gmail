@@ -1,0 +1,15 @@
+{
+  "manifest_version": 3,
+  "name": "Mail Merge for Gmail",
+  "version": "1.0.0",
+  "description": "Send personalised mass emails, scheduled campaigns and automatic follow-ups from any Gmail account.",
+  "permissions": ["identity", "storage", "unlimitedStorage", "alarms", "notifications"],
+  "host_permissions": ["https://gmail.googleapis.com/*", "https://sheets.googleapis.com/*", "https://www.googleapis.com/*"],
+  "background": { "service_worker": "background.js", "type": "module" },
+  "action": { "default_title": "Mail Merge" },
+  "content_scripts": [{
+    "matches": ["https://mail.google.com/*"],
+    "js": ["content.js"],
+    "css": ["content.css"]
+  }]
+}
